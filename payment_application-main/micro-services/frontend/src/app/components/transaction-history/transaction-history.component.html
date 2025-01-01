@@ -1,0 +1,39 @@
+<!-- transaction-history.component.html -->
+<div class="history-container">
+  <h2>Transaction History</h2>
+
+  <!-- Loading spinner -->
+  <div *ngIf="isLoading" class="loading-spinner">
+    Loading transactions...
+  </div>
+
+  <!-- Error message -->
+  <div *ngIf="errorMessage" class="error-message">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Transaction list -->
+  <div class="transaction-list" *ngIf="!isLoading && !errorMessage && payments.length > 0">
+    <div class="transaction-item" 
+    *ngFor="let payment of payments"
+    (click)="viewTransactionDetails(payment.id)"
+    [class.clickable]="true">
+      <div class="transaction-details">
+        <div class="amount-currency">
+          <span class="amount">{{ payment.amount | number:'1.2-2' }}</span>
+          <span class="currency">{{ payment.currency }}</span>
+        </div>
+        <p class="description">{{ payment.description }}</p>
+        <p class="date">{{ payment.created_at | date:'medium' }}</p>
+      </div>
+      <div class="status-chip" [ngClass]="{'completed': payment.status === 'completed'}">
+        {{ payment.status }}
+      </div>
+    </div>
+  </div>
+
+  <!-- No transactions message -->
+  <div *ngIf="!isLoading && !errorMessage && payments.length === 0" class="no-transactions">
+    No transactions found.
+  </div>
+</div>

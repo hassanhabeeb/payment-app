@@ -1,0 +1,46 @@
+<!-- transaction-details.component.html -->
+<div class="transaction-details-container">
+    <button class="back-button" (click)="goBack()">← Back to Dashboard</button>
+  
+    <div *ngIf="isLoading" class="loading">
+      Loading transaction details...
+    </div>
+  
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+  
+    <div *ngIf="payment && !isLoading" class="transaction-details-card">
+      <h2>Transaction Details</h2>
+      
+      <div class="detail-group">
+        <label>Transaction ID</label>
+        <p>{{ payment.id }}</p>
+      </div>
+  
+      <div class="detail-group">
+        <label>Amount</label>
+        <p class="amount">{{ payment.amount | number:'1.2-2' }} {{ payment.currency }}</p>
+      </div>
+  
+      <div class="detail-group">
+        <label>Status</label>
+        <p class="status" [ngClass]="payment.status">{{ payment.status }}</p>
+      </div>
+  
+      <div class="detail-group">
+        <label>Description</label>
+        <p>{{ payment.description }}</p>
+      </div>
+  
+      <div class="detail-group">
+        <label>Payment Method</label>
+        <p>{{ payment.payment_method }}</p>
+      </div>
+  
+      <div class="detail-group">
+        <label>Date</label>
+        <p>{{ payment.created_at | date:'medium' }}</p>
+      </div>
+    </div>
+  </div>

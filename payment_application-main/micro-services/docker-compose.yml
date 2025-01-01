@@ -1,0 +1,125 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+
+  auth-service:
+    build: ./backend/auth_service
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/payment_app
+      - JWT_SECRET=your-secret-key
+    volumes:
+      - ./backend/common:/app/common
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      - mongodb
+      - elasticsearch
+    networks:
+      - app-network
+
+  payment-service:
+    build: ./backend/payment_service
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/payment_app
+      - ELASTICSEARCH_HOST=elasticsearch
+    volumes:
+      - ./backend/common:/app/common
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      - mongodb
+      - elasticsearch
+      - redis
+
+    networks:
+      - app-network
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - auth-service
+      - payment-service
+    networks:
+      - app-network
+
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - auth-service
+      - payment-service
+      - frontend
+    networks:
+      - app-network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - app-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.9.3
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - app-network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.9.3
+    volumes:
+      - ./elk/logstash/config/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - ./elk/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - logstash_data:/var/log/logstash
+    depends_on:
+      - elasticsearch
+    networks:
+      - app-network
+  
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+
+
+  
+
+volumes:
+  mongodb_data:
+  elasticsearch_data:
+  logstash_data:
+  redis_data:
+
+networks:
+  app-network:
+    driver: bridge
