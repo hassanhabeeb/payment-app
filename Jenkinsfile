@@ -2,7 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "mongo:latest" "docker.elastic.co/elasticsearch/elasticsearch:7.9.3" "docker.elastic.co/kibana/kibana:7.9.3" "docker.elastic.co/logstash/logstash:7.9.3" "redis:latest" // Image name and tag
+        // Multiple Docker images stored in a single variable with a delimiter (comma-separated)
+        DOCKER_IMAGES = "mongo:latest,docker.elastic.co/elasticsearch/elasticsearch:7.9.3,docker.elastic.co/kibana/kibana:7.9.3,docker.elastic.co/logstash/logstash:7.9.3,redis:latest" 
         DOCKER_COMPOSE_PATH = "./docker-compose.yml" // Path to docker-compose.yml
         NEXUS_CREDENTIALS = credentials('nexus-cred') // Jenkins credential ID for Nexus
         SONARQUBE_TOKEN = credentials('react-app') // Jenkins credential ID for SonarQube token
@@ -30,6 +31,18 @@ pipeline {
                             -Dsonar.host.url=http://35.162.77.248:9000 \
                             -Dsonar.login=${SONARQUBE_TOKEN}
                         """
+                    }
+                }
+            }
+        }
+
+        stage('Pull Docker Images') {
+            steps {
+                script {
+                    def images = DOCKER_IMAGES.split(',')
+                    images.each { image ->
+                        echo "Pulling image: ${image}"
+                        sh "docker pull ${image}"
                     }
                 }
             }
